@@ -106,7 +106,7 @@
 </template>
 <script>
   import {formatDate} from '@/utils/date';
-  import {fetchList,deleteReason,updateStatus,addReason,getReasonDetail,updateReason} from '@/api/returnReason';
+  import {fetchList,deleteReturnReason,updateReturnReasonStatus,createReturnReason,getReturnReasonDetail,updateReturnReason} from '@/api/returnReason';
   const defaultListQuery = {
     pageNum: 1,
     pageSize: 5
@@ -156,7 +156,7 @@
       handleConfirm(){
         if(this.operateReasonId==null){
           //添加操作
-          addReason(this.returnReason).then(response=>{
+          createReturnReason(this.returnReason).then(response=>{
             this.dialogVisible=false;
             this.operateReasonId=null;
             this.$message({
@@ -168,7 +168,7 @@
           });
         }else{
           //编辑操作
-          updateReason(this.operateReasonId,this.returnReason).then(response=>{
+          updateReturnReason(this.operateReasonId,this.returnReason).then(response=>{
             this.dialogVisible=false;
             this.operateReasonId=null;
             this.$message({
@@ -183,14 +183,14 @@
       handleUpdate(index, row){
         this.dialogVisible=true;
         this.operateReasonId=row.id;
-        getReasonDetail(row.id).then(response=>{
+        getReturnReasonDetail(row.id).then(response=>{
           this.returnReason=response.data;
         });
       },
       handleDelete(index, row){
         let ids=[];
         ids.push(row.id);
-        this.deleteReason(ids);
+        this.deleteReturnReason(ids);
       },
       handleSelectionChange(val){
         this.multipleSelection = val;
@@ -201,7 +201,7 @@
         let param = new URLSearchParams();
         param.append("status",row.status);
         param.append("ids",ids);
-        updateStatus(param).then(response=>{
+        updateReturnReasonStatus(param).then(response=>{
           this.$message({
             message: '状态修改成功',
             type: 'success'
@@ -222,7 +222,7 @@
           for(let i=0;i<this.multipleSelection.length;i++){
             ids.push(this.multipleSelection[i].id);
           }
-          this.deleteReason(ids);
+          this.deleteReturnReason(ids);
         }
       },
       handleSizeChange(val){
@@ -242,7 +242,7 @@
           this.total = response.data.total;
         });
       },
-      deleteReason(ids){
+      deleteReturnReason(ids){
         this.$confirm('是否要进行该删除操作?', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
@@ -250,7 +250,7 @@
         }).then(() => {
           let params = new URLSearchParams();
           params.append("ids",ids);
-          deleteReason(params).then(response=>{
+          deleteReturnReason(params).then(response=>{
             this.$message({
               message: '删除成功！',
               type: 'success',

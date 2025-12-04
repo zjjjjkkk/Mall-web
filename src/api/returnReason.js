@@ -7,7 +7,7 @@ export function fetchList(params) {
   })
 }
 
-export function deleteReason(params) {
+export function deleteReturnReason(params) {
   return request({
     url:'/returnReason/delete',
     method:'post',
@@ -15,7 +15,7 @@ export function deleteReason(params) {
   })
 }
 
-export function updateStatus(params) {
+export function updateReturnReasonStatus(params) {
   return request({
     url:'/returnReason/update/status',
     method:'post',
@@ -23,7 +23,7 @@ export function updateStatus(params) {
   })
 }
 
-export function addReason(data) {
+export function createReturnReason(data) {
   return request({
     url:'/returnReason/create',
     method:'post',
@@ -31,14 +31,14 @@ export function addReason(data) {
   })
 }
 
-export function getReasonDetail(id) {
+export function getReturnReasonDetail(id) {
   return request({
     url:'/returnReason/'+id,
     method:'get'
   })
 }
 
-export function updateReason(id,data) {
+export function updateReturnReason(id,data) {
   return request({
     url:'/returnReason/update/'+id,
     method:'post',

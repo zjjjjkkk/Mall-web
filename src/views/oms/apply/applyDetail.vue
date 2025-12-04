@@ -195,7 +195,7 @@
   </div>
 </template>
 <script>
-  import {getApplyDetail,updateApplyStatus} from '@/api/returnApply';
+  import {getReturnApplyDetail,updateReturnApplyStatus} from '@/api/returnApply';
   import {fetchList} from '@/api/companyAddress';
   import {formatDate} from '@/utils/date';
 
@@ -307,7 +307,7 @@
         this.$router.push({path:'/oms/orderDetail',query:{id:this.orderReturnApply.orderId}});
       },
       getDetail() {
-        getApplyDetail(this.id).then(response => {
+        getReturnApplyDetail(this.id).then(response => {
           console.log("getDetail")
           this.orderReturnApply = response.data;
           this.productList = [];
@@ -341,7 +341,7 @@
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          updateApplyStatus(this.id,this.updateStatusParam).then(response=>{
+          updateReturnApplyStatus(this.id,this.updateStatusParam).then(response=>{
             this.$message({
               type: 'success',
               message: '操作成功!',

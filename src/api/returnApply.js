@@ -7,14 +7,14 @@ export function fetchList(params) {
   })
 }
 
-export function deleteApply(params) {
+export function deleteReturnApply(params) {
   return request({
     url:'/returnApply/delete',
     method:'post',
     params:params
   })
 }
-export function updateApplyStatus(id,data) {
+export function updateReturnApplyStatus(id,data) {
   return request({
     url:'/returnApply/update/status/'+id,
     method:'post',
@@ -22,7 +22,7 @@ export function updateApplyStatus(id,data) {
   })
 }
 
-export function getApplyDetail(id) {
+export function getReturnApplyDetail(id) {
   return request({
     url:'/returnApply/'+id,
     method:'get'
