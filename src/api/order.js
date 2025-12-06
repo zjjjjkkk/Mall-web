@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+
 export function fetchList(params) {
   return request({
     url:'/order/list',
@@ -61,3 +62,41 @@ export function updateOrderNote(params) {
     params:params
   })
 }
+
+// 退款相关API
+export function getRefundList(params) {
+  return request({
+    url:'/refundOrder/list',
+    method:'get',
+    params:params
+  })
+}
+
+export function getRefundDetail(id) {
+  return request({
+    url:'/refundOrder/detail/'+id,
+    method:'get'
+  })
+}
+
+export function auditRefund(data) {
+  return request({
+    url:'/refundOrder/audit',
+    method:'post',
+    data:data
+  })
+}
+
+// 根据订单编号查询退款记录
+export function getRefundByOrderSn(orderSn) {
+  return request({
+    url:'/refundOrder/list',
+    method:'get',
+    params: {
+      orderSn: orderSn,
+      pageNum: 1,
+      pageSize: 1
+    }
+  })
+}
+
