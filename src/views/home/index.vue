@@ -96,6 +96,14 @@
             </div>
           </el-col>
         </el-row>
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <div class="un-handle-item" style="cursor: pointer;" @click="goToFeedback">
+              <span class="font-medium">待处理客服反馈</span>
+              <span style="float: right" class="color-danger">({{ pendingFeedbackCount }})</span>
+            </div>
+          </el-col>
+        </el-row>
       </div>
     </div>
     <div class="overview-layout">
@@ -140,6 +148,86 @@
         </el-col>
       </el-row>
     </div>
+    <!-- 客服反馈管理区域 -->
+    <div class="feedback-layout" style="margin-top: 20px;">
+      <div class="layout-title">
+        <span>客服反馈管理</span>
+        <el-button type="primary" size="small" style="float: right; margin-top: -5px;" @click="goToFeedback">查看全部</el-button>
+      </div>
+      <div style="padding: 20px;">
+        <el-row :gutter="20">
+          <el-col :span="6">
+            <div class="feedback-stat-item">
+              <div class="feedback-stat-value color-warning">{{ pendingFeedbackCount }}</div>
+              <div class="feedback-stat-title">待处理</div>
+            </div>
+          </el-col>
+          <el-col :span="6">
+            <div class="feedback-stat-item">
+              <div class="feedback-stat-value color-primary">{{ processingFeedbackCount }}</div>
+              <div class="feedback-stat-title">处理中</div>
+            </div>
+          </el-col>
+          <el-col :span="6">
+            <div class="feedback-stat-item">
+              <div class="feedback-stat-value color-success">{{ processedFeedbackCount }}</div>
+              <div class="feedback-stat-title">已处理</div>
+            </div>
+          </el-col>
+          <el-col :span="6">
+            <div class="feedback-stat-item">
+              <div class="feedback-stat-value">{{ totalFeedbackCount }}</div>
+              <div class="feedback-stat-title">全部反馈</div>
+            </div>
+          </el-col>
+        </el-row>
+        
+        <!-- 最近反馈列表 -->
+        <div style="margin-top: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">最近反馈</div>
+          <el-table
+            :data="recentFeedbackList"
+            border
+            style="width: 100%"
+            max-height="300"
+            v-loading="feedbackLoading"
+          >
+            <el-table-column label="会员" prop="memberName" width="120" align="center" />
+            <el-table-column label="反馈类型" width="100" align="center">
+              <template slot-scope="scope">
+                <el-tag :type="getTypeTagType(scope.row.type)" size="small">
+                  {{ getTypeText(scope.row.type) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="反馈内容" min-width="200">
+              <template slot-scope="scope">
+                <span>{{ scope.row.content | ellipsis(50) }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="100" align="center">
+              <template slot-scope="scope">
+                <el-tag :type="getStatusTagType(scope.row.status)" size="small">
+                  {{ getStatusText(scope.row.status) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="提交时间" width="180" align="center">
+              <template slot-scope="scope">
+                <span>{{ scope.row.createTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="150" align="center">
+              <template slot-scope="scope">
+                <el-button size="mini" type="primary" @click="handleViewFeedback(scope.row)">查看</el-button>
+                <el-button v-if="scope.row.status !== 2" size="mini" type="success" @click="handleReplyFeedback(scope.row)">回复</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </div>
+    </div>
+
     <div class="statistics-layout">
       <div class="layout-title">订单统计</div>
       <el-row>
@@ -206,11 +294,75 @@
         </el-col>
       </el-row>
     </div>
+
+    <!-- 反馈详情/回复对话框 -->
+    <el-dialog :title="feedbackDialogTitle" :visible.sync="feedbackDialogVisible" width="800px">
+      <el-form ref="feedbackForm" :model="currentFeedback" label-position="left" label-width="100px">
+        <el-form-item label="会员名称">
+          <span>{{ currentFeedback.memberName || '--' }}</span>
+        </el-form-item>
+        <el-form-item label="反馈类型">
+          <el-tag :type="getTypeTagType(currentFeedback.type)">
+            {{ getTypeText(currentFeedback.type) }}
+          </el-tag>
+        </el-form-item>
+        <el-form-item label="反馈内容">
+          <div style="padding: 10px; background: #f5f5f5; border-radius: 4px; min-height: 100px;">
+            {{ currentFeedback.content }}
+          </div>
+        </el-form-item>
+        <el-form-item label="反馈图片" v-if="feedbackImageList.length > 0">
+          <div class="image-list">
+            <el-image
+              v-for="(img, index) in feedbackImageList"
+              :key="index"
+              :src="img"
+              :preview-src-list="feedbackImageList"
+              style="width: 100px; height: 100px; margin-right: 10px;"
+              fit="cover"
+            />
+          </div>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-tag :type="getStatusTagType(currentFeedback.status)">
+            {{ getStatusText(currentFeedback.status) }}
+          </el-tag>
+        </el-form-item>
+        <el-form-item label="提交时间">
+          <span>{{ currentFeedback.createTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
+        </el-form-item>
+        <el-form-item label="管理员回复" v-if="currentFeedback.reply">
+          <div style="padding: 10px; background: #e6f7ff; border-radius: 4px; min-height: 80px;">
+            {{ currentFeedback.reply }}
+          </div>
+          <div style="margin-top: 10px; font-size: 12px; color: #999;">
+            回复人：{{ currentFeedback.replyAdminName || '--' }} | 
+            回复时间：{{ currentFeedback.replyTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}
+          </div>
+        </el-form-item>
+        <el-form-item label="回复内容" v-if="!currentFeedback.reply">
+          <el-input
+            v-model="replyContent"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入回复内容"
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button v-if="!currentFeedback.reply" type="primary" @click="submitFeedbackReply">提交回复</el-button>
+        <el-button v-if="currentFeedback.status === 0" type="warning" @click="updateFeedbackStatus(1)">标记为处理中</el-button>
+        <el-button v-if="currentFeedback.status === 1" type="success" @click="updateFeedbackStatus(2)">标记为已处理</el-button>
+        <el-button v-if="currentFeedback.status !== 3" type="info" @click="updateFeedbackStatus(3)">关闭反馈</el-button>
+        <el-button @click="feedbackDialogVisible = false">关闭</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
   import {str2Date} from '@/utils/date';
+  import { fetchList, getDetail, reply, updateStatus } from '@/api/feedback';
   import img_home_order from '@/assets/images/home_order.png';
   import img_home_today_amount from '@/assets/images/home_today_amount.png';
   import img_home_yesterday_amount from '@/assets/images/home_yesterday_amount.png';
@@ -269,12 +421,32 @@
         dataEmpty: false,
         img_home_order,
         img_home_today_amount,
-        img_home_yesterday_amount
+        img_home_yesterday_amount,
+        // 客服反馈相关数据
+        feedbackLoading: false,
+        pendingFeedbackCount: 0,
+        processingFeedbackCount: 0,
+        processedFeedbackCount: 0,
+        totalFeedbackCount: 0,
+        recentFeedbackList: [],
+        feedbackDialogVisible: false,
+        feedbackDialogTitle: '反馈详情',
+        currentFeedback: {},
+        replyContent: '',
+        feedbackImageList: []
+      }
+    },
+    filters: {
+      ellipsis(value, length = 50) {
+        if (!value) return '';
+        if (value.length <= length) return value;
+        return value.substring(0, length) + '...';
       }
     },
     created(){
       this.initOrderCountDate();
       this.getData();
+      this.loadFeedbackData();
     },
     methods:{
       handleDateChange(){
@@ -303,6 +475,160 @@
           this.dataEmpty = false;
           this.loading = false
         }, 1000)
+      },
+      // 加载客服反馈数据
+      loadFeedbackData() {
+        this.feedbackLoading = true;
+        // 获取待处理反馈数量
+        fetchList({ status: 0, pageNum: 1, pageSize: 1 }).then(response => {
+          if (response.code === 200) {
+            this.pendingFeedbackCount = (response.data && response.data.total) || 0;
+          }
+        }).catch(() => {
+          this.pendingFeedbackCount = 0;
+        });
+        
+        // 获取处理中反馈数量
+        fetchList({ status: 1, pageNum: 1, pageSize: 1 }).then(response => {
+          if (response.code === 200) {
+            this.processingFeedbackCount = (response.data && response.data.total) || 0;
+          }
+        }).catch(() => {
+          this.processingFeedbackCount = 0;
+        });
+        
+        // 获取已处理反馈数量
+        fetchList({ status: 2, pageNum: 1, pageSize: 1 }).then(response => {
+          if (response.code === 200) {
+            this.processedFeedbackCount = (response.data && response.data.total) || 0;
+          }
+        }).catch(() => {
+          this.processedFeedbackCount = 0;
+        });
+        
+        // 获取全部反馈数量
+        fetchList({ pageNum: 1, pageSize: 1 }).then(response => {
+          if (response.code === 200) {
+            this.totalFeedbackCount = (response.data && response.data.total) || 0;
+          }
+        }).catch(() => {
+          this.totalFeedbackCount = 0;
+        });
+        
+        // 获取最近5条反馈
+        fetchList({ pageNum: 1, pageSize: 5 }).then(response => {
+          this.feedbackLoading = false;
+          if (response.code === 200) {
+            if (response.data && response.data.list) {
+              this.recentFeedbackList = response.data.list;
+            } else if (Array.isArray(response.data)) {
+              this.recentFeedbackList = response.data;
+            } else {
+              this.recentFeedbackList = [];
+            }
+          } else {
+            this.recentFeedbackList = [];
+          }
+        }).catch(() => {
+          this.feedbackLoading = false;
+          this.recentFeedbackList = [];
+        });
+      },
+      // 跳转到反馈管理页面
+      goToFeedback() {
+        this.$router.push({ path: '/feedback/customer-service' });
+      },
+      // 查看反馈详情
+      handleViewFeedback(row) {
+        getDetail(row.id).then(response => {
+          if (response.code === 200) {
+            this.currentFeedback = Object.assign({}, response.data);
+            if (this.currentFeedback.images) {
+              this.feedbackImageList = this.currentFeedback.images.split(',').filter(img => img);
+            } else {
+              this.feedbackImageList = [];
+            }
+            this.replyContent = '';
+            this.feedbackDialogTitle = '反馈详情';
+            this.feedbackDialogVisible = true;
+          }
+        }).catch(() => {
+          this.currentFeedback = Object.assign({}, row);
+          if (this.currentFeedback.images) {
+            this.feedbackImageList = this.currentFeedback.images.split(',').filter(img => img);
+          } else {
+            this.feedbackImageList = [];
+          }
+          this.replyContent = '';
+          this.feedbackDialogTitle = '反馈详情';
+          this.feedbackDialogVisible = true;
+        });
+      },
+      // 回复反馈
+      handleReplyFeedback(row) {
+        this.handleViewFeedback(row);
+        this.feedbackDialogTitle = '回复反馈';
+      },
+      // 提交回复
+      submitFeedbackReply() {
+        if (!this.replyContent.trim()) {
+          this.$message.warning('请输入回复内容');
+          return;
+        }
+        reply(this.currentFeedback.id, this.replyContent).then(response => {
+          this.$message.success('回复成功');
+          this.feedbackDialogVisible = false;
+          this.loadFeedbackData();
+        });
+      },
+      // 更新反馈状态
+      updateFeedbackStatus(status) {
+        const statusText = {
+          1: '处理中',
+          2: '已处理',
+          3: '已关闭'
+        }[status];
+        this.$confirm(`确定要标记为"${statusText}"吗？`, '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          updateStatus(this.currentFeedback.id, status).then(response => {
+            this.$message.success('更新成功');
+            this.feedbackDialogVisible = false;
+            this.loadFeedbackData();
+          });
+        });
+      },
+      // 获取反馈类型文本
+      getTypeText(type) {
+        const types = ['咨询', '建议', '投诉', '其他'];
+        return types[type] || '其他';
+      },
+      // 获取反馈类型标签类型
+      getTypeTagType(type) {
+        const types = ['', 'success', 'warning', 'info'];
+        return types[type] || 'info';
+      },
+      // 获取状态文本
+      getStatusText(status) {
+        const statusMap = {
+          0: '待处理',
+          1: '处理中',
+          2: '已处理',
+          3: '已关闭'
+        };
+        return statusMap[status] || '未知';
+      },
+      // 获取状态标签类型
+      getStatusTagType(status) {
+        const types = {
+          0: 'warning',
+          1: 'primary',
+          2: 'success',
+          3: 'info'
+        };
+        return types[status] || 'info';
       }
     }
   }
@@ -403,5 +729,37 @@
   .address-content{
     padding: 20px;
     font-size: 18px
+  }
+  .feedback-layout {
+    border: 1px solid #DCDFE6;
+  }
+  .feedback-stat-item {
+    text-align: center;
+    padding: 20px;
+    border: 1px solid #EBEEF5;
+    border-radius: 4px;
+  }
+  .feedback-stat-value {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  .feedback-stat-title {
+    font-size: 14px;
+    color: #909399;
+  }
+  .color-warning {
+    color: #E6A23C;
+  }
+  .color-primary {
+    color: #409EFF;
+  }
+  .color-success {
+    color: #67C23A;
+  }
+  .image-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 </style>

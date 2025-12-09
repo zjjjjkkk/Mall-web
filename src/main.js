@@ -15,9 +15,13 @@ import store from './store'
 
 import '@/icons' // icon
 import '@/permission' // permission control
+import { parseTime } from '@/utils/index' // 导入工具函数
 
 Vue.use(ElementUI, { locale })
 Vue.use(VCharts)
+
+// 注册全局filter
+Vue.filter('parseTime', parseTime)
 
 Vue.config.productionTip = false
 

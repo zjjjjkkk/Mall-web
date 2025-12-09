@@ -21,15 +21,40 @@ export const constantRouterMap = [
   {
     path: '',
     component: Layout,
-    redirect: '/home',
+    redirect: '/statistics/dashboard',
     meta: {title: '首页', icon: 'home'},
     children: [{
-      path: 'home',
-      name: 'home',
-      component: () => import('@/views/home/index'),
-      meta: {title: '仪表盘', icon: 'dashboard'}
+      path: 'statistics/dashboard',
+      name: 'statisticsDashboard',
+      component: () => import('@/views/statistics/dashboard'),
+      meta: {title: '数据大屏', icon: 'dashboard'}
+    }]
+  },
+  {
+    path: '/feedback',
+    component: Layout,
+    redirect: '/feedback/customer-service',
+    name: 'feedback',
+    meta: {title: '反馈', icon: 'product-comment'},
+    alwaysShow: true,
+    children: [{
+      path: 'customer-service',
+      name: 'customerServiceFeedback',
+      component: () => import('@/views/ums/feedback/index'),
+      meta: {title: '客服反馈管理', icon: 'sms'}
     },
-    ]
+    {
+      path: 'product-comment',
+      name: 'productCommentList',
+      component: () => import('@/views/pms/comment/index'),
+      meta: {title: '商品评价管理', icon: 'product-comment'}
+    },
+    {
+      path: 'product-repair',
+      name: 'productRepairList',
+      component: () => import('@/views/pms/repair/index'),
+      meta: {title: '商品报修管理', icon: 'order-return'}
+    }]
   }
 ]
 export const asyncRouterMap = [
@@ -124,7 +149,7 @@ export const asyncRouterMap = [
         component: () => import('@/views/pms/brand/update'),
         meta: {title: '编辑品牌'},
         hidden: true
-      }
+      },
     ]
   },
   {
@@ -369,6 +394,19 @@ export const asyncRouterMap = [
         hidden: true
       }
     ]
+  },
+  {
+    path: '/ugc',
+    component: Layout,
+    redirect: '/ugc/post',
+    name: 'ugc',
+    meta: {title: 'UGC帖子', icon: 'product-comment'},
+    children: [{
+      path: 'post',
+      name: 'ugcPost',
+      component: () => import('@/views/ugc/post/index'),
+      meta: {title: '帖子管理', icon: 'form'}
+    }]
   },
   {path: '*', redirect: '/404', hidden: true}
 ]
