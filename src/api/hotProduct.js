@@ -7,6 +7,14 @@ export function fetchList(params) {
   })
 }
 
+export function fetchListWithScore(params) {
+  return request({
+    url:'/home/recommendProduct/listWithScore',
+    method:'get',
+    params:params
+  })
+}
+
 export function updateRecommendStatus(data) {
   return request({
     url:'/home/recommendProduct/update/recommendStatus',

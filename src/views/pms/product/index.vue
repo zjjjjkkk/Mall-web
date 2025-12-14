@@ -81,10 +81,11 @@
                 :data="list"
                 style="width: 100%"
                 @selection-change="handleSelectionChange"
+                @sort-change="handleSortChange"
                 v-loading="listLoading"
                 border>
         <el-table-column type="selection" width="60" align="center"></el-table-column>
-        <el-table-column label="编号" width="100" align="center">
+        <el-table-column label="编号" prop="id" sortable="custom" width="100" align="center">
           <template slot-scope="scope">{{scope.row.id}}</template>
         </el-table-column>
         <el-table-column label="商品图片" width="120" align="center">
@@ -96,7 +97,7 @@
             <p>品牌：{{scope.row.brandName}}</p>
           </template>
         </el-table-column>
-        <el-table-column label="价格/货号" width="120" align="center">
+        <el-table-column label="价格/货号" prop="price" sortable="custom" width="120" align="center">
           <template slot-scope="scope">
             <p>价格：￥{{scope.row.price}}</p>
             <p>货号：{{scope.row.productSn}}</p>
@@ -138,7 +139,7 @@
             <el-button type="primary" icon="el-icon-edit" @click="handleShowSkuEditDialog(scope.$index, scope.row)" circle></el-button>
           </template>
         </el-table-column>
-        <el-table-column label="销量" width="100" align="center">
+        <el-table-column label="销量" prop="sale" sortable="custom" width="100" align="center">
           <template slot-scope="scope">{{scope.row.sale}}</template>
         </el-table-column>
         <el-table-column label="审核状态" width="100" align="center">
@@ -292,7 +293,9 @@
     verifyStatus: null,
     productSn: null,
     productCategoryId: null,
-    brandId: null
+    brandId: null,
+    sortField: null,
+    sortOrder: null
   };
   export default {
     name: "productList",
@@ -406,6 +409,21 @@
           this.list = response.data.list;
           this.total = response.data.total;
         });
+      },
+      // 表格排序回调，支持升序/降序
+      handleSortChange({ prop, order }) {
+        // 仅对编号和价格做排序示例，可扩展
+        if (prop === 'id') {
+          this.listQuery.sortField = 'id';
+        } else if (prop === 'price') {
+          this.listQuery.sortField = 'price';
+        } else if (prop === 'sale') {
+          this.listQuery.sortField = 'sale';
+        } else {
+          this.listQuery.sortField = null;
+        }
+        this.listQuery.sortOrder = order === 'ascending' ? 'asc' : 'desc';
+        this.getList();
       },
       getBrandList() {
         fetchBrandList({pageNum: 1, pageSize: 100}).then(response => {

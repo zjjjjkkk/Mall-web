@@ -46,8 +46,8 @@
           dir: '',
           host: ''
         },
-        useOss:false, //使用oss->true;使用MinIO->false
-        ossUploadUrl:'http://macro-oss.oss-cn-shenzhen.aliyuncs.com',
+        useOss:true, //使用oss->true;使用MinIO->false
+        ossUploadUrl:'http://localhost:8080/upload/oss',
         minioUploadUrl:'http://localhost:8080/minio/upload',
       }
     },
@@ -72,9 +72,12 @@
         const objKeyArr = Object.keys(this.listObj)
         for (let i = 0, len = objKeyArr.length; i < len; i++) {
           if (this.listObj[objKeyArr[i]].uid === uid) {
-            this.listObj[objKeyArr[i]].url = this.dataObj.host + '/' + this.dataObj.dir + '/' + file.name;
-            if(!this.useOss){
-              //不使用oss直接获取图片路径
+            // ✅ 统一处理：OSS模式从response.data获取URL
+            if(this.useOss){
+              // OSS模式：从后端返回的data中获取URL
+              this.listObj[objKeyArr[i]].url = response.data;
+            } else {
+              // MinIO模式：直接获取图片路径
               this.listObj[objKeyArr[i]].url = response.data.url;
             }
             this.listObj[objKeyArr[i]].hasSuccess = true;
@@ -96,11 +99,14 @@
         const _self = this
         const fileName = file.uid;
         this.listObj[fileName] = {};
-        if(!this.useOss){
-          //不使用oss不需要获取策略
+        if(this.useOss){
+          // OSS模式：不需要获取策略，直接允许上传（由后端处理）
           this.listObj[fileName] = {hasSuccess: false, uid: file.uid, width: this.width, height: this.height};
           return true;
         }
+        // MinIO模式：不需要获取策略
+        this.listObj[fileName] = {hasSuccess: false, uid: file.uid, width: this.width, height: this.height};
+        return true;
         return new Promise((resolve, reject) => {
           policy().then(response => {
             _self.dataObj.policy = response.data.policy;
